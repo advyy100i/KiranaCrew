@@ -177,13 +177,6 @@ Telegram bot.
 | :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
 | <img src="https://github.com/user-attachments/assets/68f94029-3b11-418b-a750-b48d3796ce6a" width="400"> | <img src="https://github.com/user-attachments/assets/826a86ee-0a7d-4a73-b599-8e206fbef553" width="400"> |
 
-### n8n workflows
-<!-- The editor view of one workflow and a Telegram alert it produced. -->
-
-| Workflow in the n8n editor | Alert on Telegram |
-|:---:|:---:|
-| ![n8n workflow](docs/img/n8n-workflow.png) | ![n8n alert](docs/img/n8n-alert.png) |
-
 ---
 
 ## Numbers we are proud of
