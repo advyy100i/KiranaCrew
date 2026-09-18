@@ -74,6 +74,8 @@ Think of it as an assembly line with six stations. Each station has one job and 
 The shopkeeper sees only a friendly reply with an Undo button. The whole trip typically takes a few seconds.
 
 ---
+## Architecture
+<img width="1600" height="900" alt="WhatsApp Image 2026-09-19 at 1 44 20 AM" src="https://github.com/user-attachments/assets/2296e517-f6d0-49e2-9656-73bf4fb3f02f" />
 
 ## Results
 
