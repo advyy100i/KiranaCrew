@@ -43,11 +43,8 @@ It runs on a plain laptop, costs ₹0 per month, and works offline for everythin
 
 Think of it as an assembly line with six stations. Each station has one job and hands its result to the next.
 
-```
- 🎤 voice note ──► 1. Listen ──► 2. Tidy up ──► 3. Understand ──► 4. Match ──► 5. Decide ──► 6. Book it
-                    Whisper       normalizer     rules + LLM      catalog      commit /      one database
-                                                                  lookup       ask / reject  transaction
-```
+<img width="1920" height="819" alt="ChatGPT Image Sep 19, 2026, 01_21_30 AM" src="https://github.com/user-attachments/assets/d50442d1-95cf-4eab-8534-19fbbbb7dfe0" />
+
 
 1. **Listen: Whisper turns speech into text.** The audio clip is transcribed on the laptop's CPU by
    faster-whisper. Hindi, Hinglish and code-switching mid-sentence are all fine.
@@ -164,21 +161,21 @@ Telegram bot.
 
 ### The bot in action
 <!-- Voice note → reply with buttons → Undo. Drop screenshots here. -->
+|                                            Voice note booked                                            |                                        Ambiguity becomes a button                                       |
+| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
+|  <img src="https://github.com/user-attachments/assets/9e67fd95-603b-4529-b1ce-64bd7fdebafa" width="360">|<img src="https://github.com/user-attachments/assets/e5bcf2d3-4097-46bb-9bd0-d73081fea0c9" width="500">|
 
-| Voice note booked | Ambiguity becomes a button | Undo |
-|:---:|:---:|:---:|
-| ![Bot reply](docs/img/bot-reply.png) | ![Bot asks](docs/img/bot-ask.png) | ![Undo](docs/img/bot-undo.png) |
 
 ### The dashboard
 <!-- Aaj · Customers · Stock · Transactions. Desktop and phone. -->
 
-| Aaj | Customers |
-|:---:|:---:|
-| ![Today](docs/img/dash-today.png) | ![Customers](docs/img/dash-customers.png) |
+|                                                   Aaj                                                   |                                                Customers                                                |
+| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/user-attachments/assets/cfac543d-f6d1-449f-8e0b-8a68d76cf533" width="400"> | <img src="https://github.com/user-attachments/assets/41c2904e-d918-49f8-a8fd-23bc88068441" width="400"> |
 
-| Stock | Transactions |
-|:---:|:---:|
-| ![Stock](docs/img/dash-stock.png) | ![Transactions](docs/img/dash-transactions.png) |
+|                                                  Stock                                                  |                                               Transactions                                              |
+| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/user-attachments/assets/68f94029-3b11-418b-a750-b48d3796ce6a" width="400"> | <img src="https://github.com/user-attachments/assets/826a86ee-0a7d-4a73-b599-8e206fbef553" width="400"> |
 
 ### n8n workflows
 <!-- The editor view of one workflow and a Telegram alert it produced. -->
