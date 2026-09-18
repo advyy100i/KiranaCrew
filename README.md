@@ -31,6 +31,9 @@ It runs on a plain laptop, costs ₹0 per month, and works offline for everythin
   mid-way. Five independent safety layers make sure one voice note becomes exactly one entry.
 - **The catalog teaches itself.** Say a product the bot does not know, tap *➕ Naya item*, answer one or two
   questions, and from then on the word you used is an alias for it.
+- **It runs the shop while the shopkeeper sleeps.** Four n8n workflows handle the boring-but-vital routine: the
+  9 pm daily summary, low-stock alerts every two hours, a health alert if a voice note gets stuck, and the nightly
+  forecast/insights jobs. All of it read-only, none of it able to touch a rupee.
 - **Fully local.** Speech recognition, language understanding, database, dashboard, automation: everything runs
   in Docker and Python on the shopkeeper's own machine. No subscription, no data leaving the shop.
 
@@ -99,17 +102,33 @@ every AI call made. Row-level locking (`FOR UPDATE SKIP LOCKED`) is what lets th
 with no extra broker, and unique constraints are what make duplicate deliveries harmless.
 
 ### n8n: the shop's night-shift assistant
-n8n is a visual automation tool. KiranaCrew ships four ready-made workflows:
+Bookkeeping is only half the job. The other half is remembering to check the books: what sold today, what is
+about to run out, whether anything broke. That half is handed to **n8n**, a visual, self-hosted automation tool
+that runs in the same Docker stack. It gives KiranaCrew a scheduler, retries, an execution log and a drag-and-drop
+editor for free, so none of that had to be written by hand, and the shopkeeper (or whoever operates the stack) can
+change a schedule or a message without touching Python.
 
-| Workflow | What it does |
-|---|---|
-| Daily summary | 9 pm every day: today's sales, cash vs credit, and outstanding balances, sent to the owner on Telegram |
-| Low-stock watch | Every 2 hours: anything below its reorder level gets flagged |
-| Failed-message alert | Every 15 minutes: if a voice note could not be processed, the operator hears about it |
-| Nightly jobs | Enqueues the demand forecast and weekly insights run |
+Four workflows ship as version-controlled JSON in [`workflows/`](workflows/), ready to import:
 
-Crucially, n8n is **read-only by design**: it connects with a database role that can only `SELECT`, and the
-API endpoints it calls can only read stats or enqueue jobs. Automation can never touch the ledger.
+| Workflow | Runs | What it does |
+|---|---|---|
+| **Daily summary** | every day, 9 pm | Asks the API for the day's numbers and sends the owner a Telegram digest: sales, cash vs udhaar, and who owes what |
+| **Low-stock watch** | every 2 hours | Runs one `SELECT` against a read-only view; anything under its reorder level becomes a Telegram alert |
+| **Failed-message alert** | every 15 minutes | Polls `/dev/stats`; if a voice note is stuck or the worker heartbeat is stale, the operator hears about it before the shopkeeper does |
+| **Nightly jobs** | every day, 2 am (+ Sundays) | Enqueues the demand-forecast job nightly and the CrewAI weekly-insights job on Sundays |
+
+Each workflow is a straight line of three or four nodes (schedule → HTTP or Postgres → condition → Telegram), and
+each carries a sticky note stating the one rule it must obey:
+
+> **n8n is read-only by design.** Its Postgres credential is a role that can only `SELECT`. The API endpoints it
+> is allowed to call can only *read* stats, *send* a summary, or *enqueue* a job for the worker. There is no path
+> from n8n to `transactions`, so a misconfigured workflow can wake you up at 3 am, but it can never alter the
+> ledger. This is a deliberate decision, recorded in
+> [ADR-004](docs/decisions/ADR-004-n8n-scope.md).
+
+Start it with `.\scripts\start_demo.ps1 -Tools`, open `http://localhost:5678`, import the four JSON files and
+add three credentials (admin key, bot token, read-only Postgres). Full steps in
+[`workflows/README.md`](workflows/README.md).
 
 ### CrewAI: the weekly advisor
 Once a week, KiranaCrew writes the shopkeeper a short advisory note in Hinglish. This is the one place where AI
@@ -138,6 +157,35 @@ to remember.
 Postgres, the API, the worker and n8n are all described in one compose file. `.\scripts\start_demo.ps1` brings
 the whole stack up from cold, migrates the schema, seeds a demo shop with 12 weeks of history, and connects the
 Telegram bot.
+
+---
+
+## Results
+
+### The bot in action
+<!-- Voice note → reply with buttons → Undo. Drop screenshots here. -->
+
+| Voice note booked | Ambiguity becomes a button | Undo |
+|:---:|:---:|:---:|
+| ![Bot reply](docs/img/bot-reply.png) | ![Bot asks](docs/img/bot-ask.png) | ![Undo](docs/img/bot-undo.png) |
+
+### The dashboard
+<!-- Aaj · Customers · Stock · Transactions. Desktop and phone. -->
+
+| Aaj | Customers |
+|:---:|:---:|
+| ![Today](docs/img/dash-today.png) | ![Customers](docs/img/dash-customers.png) |
+
+| Stock | Transactions |
+|:---:|:---:|
+| ![Stock](docs/img/dash-stock.png) | ![Transactions](docs/img/dash-transactions.png) |
+
+### n8n workflows
+<!-- The editor view of one workflow and a Telegram alert it produced. -->
+
+| Workflow in the n8n editor | Alert on Telegram |
+|:---:|:---:|
+| ![n8n workflow](docs/img/n8n-workflow.png) | ![n8n alert](docs/img/n8n-alert.png) |
 
 ---
 
