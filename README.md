@@ -9,12 +9,10 @@ internet is Telegram itself.
 sentences; an LLM extracts *mentions* for the tail, every number it returns must already be in the transcript, and
 `money.py` prices in integer paise. Ambiguity becomes a Telegram button, never a guess.
 
-```
-Telegram ──► /telegram/webhook ──► messages (idempotency_key UNIQUE) + jobs ──► 200 OK
-                                        │
-              worker (FOR UPDATE SKIP LOCKED) ──► STT ──► normalize ──► rules ─┬─► resolve ──► decide ──► post (1 txn)
-                                                                     LLM (tail) ┘                    └──► pending_actions + buttons
-```
+
+<img width="1774" height="887" alt="ChatGPT Image Sep 18, 2026, 09_30_02 PM" src="https://github.com/user-attachments/assets/6b7aa8df-d5a9-4204-8690-89403de6ee9e" />
+
+
 
 ## Quick start (Windows, fresh clone → working bot in ~10 minutes)
 
