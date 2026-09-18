@@ -75,6 +75,28 @@ The shopkeeper sees only a friendly reply with an Undo button. The whole trip ty
 
 ---
 
+## Results
+
+### The bot in action
+<!-- Voice note → reply with buttons → Undo. Drop screenshots here. -->
+|                                            Voice note booked                                            |                                        Ambiguity becomes a button                                       |
+| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
+|  <img src="https://github.com/user-attachments/assets/9e67fd95-603b-4529-b1ce-64bd7fdebafa" width="360">|<img src="https://github.com/user-attachments/assets/e5bcf2d3-4097-46bb-9bd0-d73081fea0c9" width="500">|
+
+
+### The dashboard
+<!-- Aaj · Customers · Stock · Transactions. Desktop and phone. -->
+
+|                                                   Aaj                                                   |                                                Customers                                                |
+| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/user-attachments/assets/cfac543d-f6d1-449f-8e0b-8a68d76cf533" width="400"> | <img src="https://github.com/user-attachments/assets/41c2904e-d918-49f8-a8fd-23bc88068441" width="400"> |
+
+|                                                  Stock                                                  |                                               Transactions                                              |
+| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
+| <img src="https://github.com/user-attachments/assets/68f94029-3b11-418b-a750-b48d3796ce6a" width="400"> | <img src="https://github.com/user-attachments/assets/826a86ee-0a7d-4a73-b599-8e206fbef553" width="400"> |
+
+---
+
 ## The tools, and what each one is for
 
 ### Telegram: the entire user interface
@@ -154,28 +176,6 @@ to remember.
 Postgres, the API, the worker and n8n are all described in one compose file. `.\scripts\start_demo.ps1` brings
 the whole stack up from cold, migrates the schema, seeds a demo shop with 12 weeks of history, and connects the
 Telegram bot.
-
----
-
-## Results
-
-### The bot in action
-<!-- Voice note → reply with buttons → Undo. Drop screenshots here. -->
-|                                            Voice note booked                                            |                                        Ambiguity becomes a button                                       |
-| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
-|  <img src="https://github.com/user-attachments/assets/9e67fd95-603b-4529-b1ce-64bd7fdebafa" width="360">|<img src="https://github.com/user-attachments/assets/e5bcf2d3-4097-46bb-9bd0-d73081fea0c9" width="500">|
-
-
-### The dashboard
-<!-- Aaj · Customers · Stock · Transactions. Desktop and phone. -->
-
-|                                                   Aaj                                                   |                                                Customers                                                |
-| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
-| <img src="https://github.com/user-attachments/assets/cfac543d-f6d1-449f-8e0b-8a68d76cf533" width="400"> | <img src="https://github.com/user-attachments/assets/41c2904e-d918-49f8-a8fd-23bc88068441" width="400"> |
-
-|                                                  Stock                                                  |                                               Transactions                                              |
-| :-----------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------: |
-| <img src="https://github.com/user-attachments/assets/68f94029-3b11-418b-a750-b48d3796ce6a" width="400"> | <img src="https://github.com/user-attachments/assets/826a86ee-0a7d-4a73-b599-8e206fbef553" width="400"> |
 
 ---
 
