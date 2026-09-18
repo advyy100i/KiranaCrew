@@ -1,0 +1,5 @@
+# heavy extras, imported only by their own entrypoints
+faster-whisper>=1.0
+statsforecast>=1.7
+pandas>=2.2
+crewai>=0.80

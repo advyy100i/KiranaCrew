@@ -1,0 +1,151 @@
+{
+ "name": "KiranaCrew - Low stock watch (2h)",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 */2 * * *"
+      }
+     ]
+    }
+   },
+   "name": "Every 2 hours",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "operation": "executeQuery",
+    "query": "SELECT name, stock, base_unit, low_stock_threshold FROM v_product_stock WHERE low_stock_threshold IS NOT NULL AND stock < low_stock_threshold ORDER BY name",
+    "options": {}
+   },
+   "name": "SELECT low stock",
+   "type": "n8n-nodes-base.postgres",
+   "typeVersion": 2.4,
+   "position": [
+    260,
+    0
+   ],
+   "credentials": {
+    "postgres": {
+     "id": "PG_RO",
+     "name": "KiranaCrew read-only (kirana_ro)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "strict"
+     },
+     "conditions": [
+      {
+       "id": "c1",
+       "leftValue": "={{ $items().length }}",
+       "rightValue": 0,
+       "operator": {
+        "type": "number",
+        "operation": "gt"
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Any rows?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2,
+   "position": [
+    520,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "chatId": "={{ $env.OWNER_CHAT_ID }}",
+    "text": "=⚠️ Kam stock: {{ $items().map(i => i.json.name + ' ' + i.json.stock + ' ' + i.json.base_unit).join(', ') }}",
+    "additionalFields": {}
+   },
+   "name": "Alert low stock",
+   "type": "n8n-nodes-base.telegram",
+   "typeVersion": 1.2,
+   "position": [
+    780,
+    0
+   ],
+   "credentials": {
+    "telegramApi": {
+     "id": "TG",
+     "name": "KiranaCrew bot"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "READ-ONLY BY DESIGN (ADR-004): this workflow only calls admin-key GET/POST endpoints that read or enqueue, and a read-only Postgres role. It cannot create a transaction. If n8n is down, bookkeeping is unaffected.",
+    "height": 160,
+    "width": 420
+   },
+   "name": "Boundary note",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    0,
+    -220
+   ]
+  }
+ ],
+ "connections": {
+  "Every 2 hours": {
+   "main": [
+    [
+     {
+      "node": "SELECT low stock",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "SELECT low stock": {
+   "main": [
+    [
+     {
+      "node": "Any rows?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Any rows?": {
+   "main": [
+    [
+     {
+      "node": "Alert low stock",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    []
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Kolkata",
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

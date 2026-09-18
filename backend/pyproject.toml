@@ -1,0 +1,10 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: needs a live Postgres (DATABASE_URL)"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+ignore = ["E702", "E731", "E741", "E701"]

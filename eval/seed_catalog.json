@@ -1,0 +1,27 @@
+{
+  "shop": {"name": "Sharma Kirana Store", "language": "hi"},
+  "customers": [
+    {"name": "Ramesh Kumar", "aliases": ["रमेश कुमार"]},
+    {"name": "Ramesh Sharma", "aliases": ["रमेश शर्मा"]},
+    {"name": "Rakesh Kumar", "aliases": ["राकेश कुमार"]},
+    {"name": "Suresh Yadav", "aliases": ["सुरेश यादव"]},
+    {"name": "Sunita Devi", "aliases": ["सुनीता देवी"]},
+    {"name": "Mohan Lal", "aliases": ["मोहन लाल"]},
+    {"name": "Anil Gupta", "aliases": ["अनिल गुप्ता"]},
+    {"name": "Pooja Verma", "aliases": ["पूजा वर्मा"]}
+  ],
+  "products": [
+    {"name": "Rice", "base_unit": "kg", "selling_price_paise": 5000, "opening_stock": 100, "low_stock_threshold": 10, "aliases": ["rice", "chawal", "chaawal", "chaval", "चावल"]},
+    {"name": "Sugar", "base_unit": "kg", "selling_price_paise": 4500, "opening_stock": 60, "low_stock_threshold": 10, "aliases": ["sugar", "cheeni", "chini", "shakkar", "चीनी", "शक्कर"]},
+    {"name": "Atta", "base_unit": "kg", "selling_price_paise": 4000, "opening_stock": 80, "low_stock_threshold": 10, "aliases": ["atta", "aata", "आटा"]},
+    {"name": "Toor Dal", "base_unit": "kg", "selling_price_paise": 14000, "opening_stock": 25, "low_stock_threshold": 5, "aliases": ["toor dal", "tur dal", "arhar dal", "तूर दाल", "अरहर दाल", "dal", "दाल"]},
+    {"name": "Moong Dal", "base_unit": "kg", "selling_price_paise": null, "opening_stock": 20, "low_stock_threshold": 5, "aliases": ["moong dal", "mung dal", "मूंग दाल", "dal", "दाल"]},
+    {"name": "Mustard Oil", "base_unit": "litre", "selling_price_paise": 18000, "opening_stock": 30, "low_stock_threshold": 5, "aliases": ["mustard oil", "sarson tel", "sarson oil", "सरसों तेल", "tel", "तेल"]},
+    {"name": "Refined Oil", "base_unit": "litre", "selling_price_paise": 15000, "opening_stock": 30, "low_stock_threshold": 5, "aliases": ["refined oil", "refined tel", "refined", "रिफाइंड", "tel", "तेल"]},
+    {"name": "Milk", "base_unit": "litre", "selling_price_paise": 6000, "opening_stock": 40, "low_stock_threshold": 10, "aliases": ["milk", "doodh", "dudh", "दूध"]},
+    {"name": "Salt", "base_unit": "packet", "selling_price_paise": 2500, "opening_stock": 50, "low_stock_threshold": 10, "aliases": ["salt", "namak", "नमक"]},
+    {"name": "Soap", "base_unit": "piece", "selling_price_paise": 3500, "opening_stock": 60, "low_stock_threshold": 10, "aliases": ["soap", "sabun", "साबुन"]},
+    {"name": "Biscuit", "base_unit": "packet", "selling_price_paise": 1000, "opening_stock": 100, "low_stock_threshold": 20, "aliases": ["biscuit", "biscuits", "biskut", "बिस्कुट"]},
+    {"name": "Eggs", "base_unit": "piece", "selling_price_paise": 700, "opening_stock": 180, "low_stock_threshold": 30, "aliases": ["egg", "eggs", "anda", "ande", "अंडा", "अंडे"]}
+  ]
+}

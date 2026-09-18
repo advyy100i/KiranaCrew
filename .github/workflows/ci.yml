@@ -1,0 +1,31 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env: { POSTGRES_USER: kirana, POSTGRES_PASSWORD: kirana, POSTGRES_DB: kirana }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U kirana" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://kirana:kirana@127.0.0.1:5432/kirana
+      STT_PROVIDER: fixture
+      PARSER_MODE: rules
+      PYTHONIOENCODING: utf-8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip }
+      - run: pip install -r backend/requirements-dev.txt statsforecast pandas
+      - run: ruff check backend/app backend/tests
+      - run: python -m pytest -q
+        working-directory: backend
+      - name: eval (rules, both sets) — false-update rate must be 0
+        working-directory: backend
+        run: |
+          python -m app.cli.eval --dataset ../eval/dataset.jsonl --catalog ../eval/seed_catalog.json --json /tmp/d.json | tee /tmp/d.txt
+          python -m app.cli.eval --dataset ../eval/heldout.jsonl --catalog ../eval/seed_catalog.json --json /tmp/h.json | tee /tmp/h.txt
+          grep -q "FALSE UPDATE RATE:          0.0%" /tmp/d.txt && grep -q "FALSE UPDATE RATE:          0.0%" /tmp/h.txt

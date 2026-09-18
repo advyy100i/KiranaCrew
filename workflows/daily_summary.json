@@ -1,0 +1,110 @@
+{
+ "name": "KiranaCrew - Daily summary 21:00",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "0 21 * * *"
+      }
+     ]
+    }
+   },
+   "name": "Every day 21:00",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "http://host.docker.internal:8000/internal/daily-summary?shop_id=1",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpHeaderAuth",
+    "options": {}
+   },
+   "name": "POST /internal/daily-summary",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    260,
+    0
+   ],
+   "credentials": {
+    "httpHeaderAuth": {
+     "id": "ADMIN_KEY",
+     "name": "KiranaCrew admin key (X-Admin-Key)"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "chatId": "={{ $env.OWNER_CHAT_ID }}",
+    "text": "={{ $json.text }}",
+    "additionalFields": {}
+   },
+   "name": "Send summary",
+   "type": "n8n-nodes-base.telegram",
+   "typeVersion": 1.2,
+   "position": [
+    520,
+    0
+   ],
+   "credentials": {
+    "telegramApi": {
+     "id": "TG",
+     "name": "KiranaCrew bot"
+    }
+   }
+  },
+  {
+   "parameters": {
+    "content": "READ-ONLY BY DESIGN (ADR-004): this workflow only calls admin-key GET/POST endpoints that read or enqueue, and a read-only Postgres role. It cannot create a transaction. If n8n is down, bookkeeping is unaffected.",
+    "height": 160,
+    "width": 420
+   },
+   "name": "Boundary note",
+   "type": "n8n-nodes-base.stickyNote",
+   "typeVersion": 1,
+   "position": [
+    0,
+    -220
+   ]
+  }
+ ],
+ "connections": {
+  "Every day 21:00": {
+   "main": [
+    [
+     {
+      "node": "POST /internal/daily-summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "POST /internal/daily-summary": {
+   "main": [
+    [
+     {
+      "node": "Send summary",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "active": false,
+ "settings": {
+  "timezone": "Asia/Kolkata",
+  "executionOrder": "v1"
+ },
+ "pinData": {}
+}

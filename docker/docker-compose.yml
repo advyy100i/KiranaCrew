@@ -1,0 +1,42 @@
+# docker compose -f docker/docker-compose.yml up -d           (db, api, worker)
+# docker compose -f docker/docker-compose.yml --profile tools up -d n8n
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_USER: kirana, POSTGRES_PASSWORD: kirana, POSTGRES_DB: kirana }
+    ports: ["127.0.0.1:5433:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U kirana"], interval: 5s, retries: 10 }
+  api:
+    build: { context: ../backend }
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://kirana:kirana@db:5432/kirana
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on: { db: { condition: service_healthy } }
+    extra_hosts: ["host.docker.internal:host-gateway"]
+  worker:
+    build: { context: ../backend }
+    command: ["python", "-m", "app.cli.worker"]
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgresql+psycopg://kirana:kirana@db:5432/kirana
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      WHISPER_DOWNLOAD_ROOT: /models
+    volumes: ["whisper_models:/models"]
+    depends_on: { db: { condition: service_healthy } }
+    extra_hosts: ["host.docker.internal:host-gateway"]
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    profiles: ["tools"]
+    ports: ["127.0.0.1:5678:5678"]
+    environment:
+      N8N_SECURE_COOKIE: "false"
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: ${N8N_PASSWORD:-admin}
+      GENERIC_TIMEZONE: Asia/Kolkata
+    volumes: ["n8n_data:/home/node/.n8n", "../workflows:/workflows:ro"]
+    extra_hosts: ["host.docker.internal:host-gateway"]
+volumes: { pgdata: {}, n8n_data: {}, whisper_models: {} }

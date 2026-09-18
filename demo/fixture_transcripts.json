@@ -1,0 +1,4 @@
+{
+ "_comment": "sha256(audio bytes) -> transcript; used by STT_PROVIDER=fixture. Add real clips with scripts/add_fixture.py",
+ "f8a02b72798eeac21432c6bd4406cd075f8a335c1662821a1e026dae036dd791": "Ramesh Kumar ne paanch kilo chawal udhaar pe liya"
+}
