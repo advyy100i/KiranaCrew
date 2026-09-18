@@ -1,107 +1,181 @@
 # KiranaCrew
 
-Telegram voice bookkeeping for a kirana shop. A Hindi/Hinglish voice note goes in
-("Ramesh Kumar ne paanch kilo chawal udhaar pe liya"); a validated stock movement and credit-ledger entry come out.
-Runs entirely on a laptop (Docker + faster-whisper + Ollama), ₹0, offline-capable — the only thing that needs the
-internet is Telegram itself.
+**Voice-first bookkeeping for the corner shop. Speak a sale into Telegram, and the books are done.**
 
-**The rule that shapes everything:** the LLM is never allowed near the arithmetic or the IDs. Rules parse most
-sentences; an LLM extracts *mentions* for the tail, every number it returns must already be in the transcript, and
-`money.py` prices in integer paise. Ambiguity becomes a Telegram button, never a guess.
+Every kirana store in India runs on trust and memory. "Ramesh took five kilos of rice on credit" lives in the
+shopkeeper's head, or in a paper diary that nobody adds up until it is too late. Accounting apps exist, but they
+demand typing, English, menus, and time that a shopkeeper serving ten customers at once does not have.
 
+KiranaCrew removes all of that. The shopkeeper sends a voice note in Hindi or Hinglish to a Telegram bot:
 
-<img width="1774" height="887" alt="ChatGPT Image Sep 18, 2026, 09_30_02 PM" src="https://github.com/user-attachments/assets/6b7aa8df-d5a9-4204-8690-89403de6ee9e" />
+> *"Ramesh Kumar ne paanch kilo chawal udhaar pe liya"*
 
+Seconds later the bot replies with what it understood, stock is reduced by 5 kg, ₹250 is added to Ramesh's
+credit account, and the shopkeeper is back to serving customers. If something is unclear (two customers called
+Ramesh? a product it has never heard of?), the bot asks with a tap-able button instead of guessing.
 
+It runs on a plain laptop, costs ₹0 per month, and works offline for everything except Telegram itself.
 
-## Quick start (Windows, fresh clone → working bot in ~10 minutes)
+---
 
-```powershell
-winget install -e --id Python.Python.3.12; winget install -e --id Docker.DockerDesktop
-winget install -e --id Ollama.Ollama; winget install -e --id Cloudflare.cloudflared   # cloudflared optional
-py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1
-pip install -r backend\requirements-dev.txt -r backend\requirements-tools.txt      # tools file is optional (whisper, forecast)
-copy .env.example .env      # fill TELEGRAM_BOT_TOKEN (BotFather), set ADMIN_API_KEY / TELEGRAM_WEBHOOK_SECRET
-ollama pull qwen2.5:3b
+## Why it stands out
 
-docker compose -f docker\docker-compose.yml up -d db            # Postgres on 127.0.0.1:5433
-cd backend
-python -m app.cli.migrate
-python -m app.cli.seed_demo --reset                              # shop, 8 customers, 12 products, 12 weeks of history
-python -m uvicorn app.main:app --port 8000                       # terminal 1
-python -m app.cli.worker                                         # terminal 2 (loads Whisper once)
+- **Zero-typing input.** Voice notes in the language people actually speak: Hindi, Hinglish, numbers like
+  *"dhai sau"* (250) and *"paanch kilo"* (5 kg).
+- **It never guesses with money.** The AI is kept away from arithmetic and IDs. Every rupee is computed by
+  ordinary code in integer paise. Across 185 evaluation sentences, the number of wrong entries silently written
+  to the books is **zero**.
+- **Undo, always.** Every booking comes with an Undo button. Mistakes become reversal entries, never deletions,
+  so the ledger is always auditable.
+- **Duplicate-proof.** Telegram may deliver the same message twice; the phone may retry; the worker may crash
+  mid-way. Five independent safety layers make sure one voice note becomes exactly one entry.
+- **The catalog teaches itself.** Say a product the bot does not know, tap *➕ Naya item*, answer one or two
+  questions, and from then on the word you used is an alias for it.
+- **Fully local.** Speech recognition, language understanding, database, dashboard, automation: everything runs
+  in Docker and Python on the shopkeeper's own machine. No subscription, no data leaving the shop.
+
+---
+
+## How a voice note becomes a ledger entry
+
+Think of it as an assembly line with six stations. Each station has one job and hands its result to the next.
+
+```
+ 🎤 voice note ──► 1. Listen ──► 2. Tidy up ──► 3. Understand ──► 4. Match ──► 5. Decide ──► 6. Book it
+                    Whisper       normalizer     rules + LLM      catalog      commit /      one database
+                                                                  lookup       ask / reject  transaction
 ```
 
-Register yourself: send `/start` to the bot, copy the user id, then
-`python -m app.cli.register_shop --telegram-user-id <id>`. Receive updates either way:
+1. **Listen: Whisper turns speech into text.** The audio clip is transcribed on the laptop's CPU by
+   faster-whisper. Hindi, Hinglish and code-switching mid-sentence are all fine.
 
-```powershell
-cloudflared tunnel --url http://localhost:8000                   # A) webhook: prints https://xxx.trycloudflare.com
-python -m app.cli.set_webhook --url https://xxx.trycloudflare.com/telegram/webhook
-python -m app.cli.poll                                           # B) long polling, no tunnel, no inbound connectivity
-```
+2. **Tidy up: the normalizer makes the text boring.** Spoken numbers become digits (*"paanch"* → 5,
+   *"dhai sau"* → 250), units are standardised (*"kilo"*, *"kg"*, *"kilogram"* → kg), and Hindi/English spellings
+   of the same word are unified. Deterministic, unit-tested, and it makes the next step far easier.
 
-Or everything at once: `.\scripts\start_demo.ps1` (Docker stack + migrate + seed + tunnel + webhook), then
-`.\scripts\demo_check.ps1` (the T-30-minute checklist, automated).
+3. **Understand: rules first, AI for the leftovers.** A hand-written rules parser handles the everyday sentence
+   shapes (*X ne Y kilo Z udhaar liya*, *X ne 200 diya*, *Z ka stock aaya*) instantly and predictably. Only when
+   the rules come back incomplete does a small local language model (Ollama running Qwen 2.5) step in, and even
+   then it is only allowed to point at words that are already in the transcript. If it "invents" a number, the
+   result is thrown away.
 
-No Telegram? The simulator runs the identical pipeline:
+4. **Match: names become records.** *"Ramesh"* is matched against the shop's customers, *"chawal"* against the
+   product catalog and its aliases. Exact match, fuzzy match, or a short list of candidates for the shopkeeper
+   to pick from.
 
-```powershell
-curl -X POST http://127.0.0.1:8000/dev/simulate -H "X-Admin-Key: <ADMIN_API_KEY>" -H "Content-Type: application/json" `
-     -d '{"text":"Ramesh ne 2 kilo cheeni udhaar liya"}'        # -> buttons as JSON; answer with /dev/simulate/choose
-curl http://127.0.0.1:8000/dev/trace/<message_id> -H "X-Admin-Key: ..."   # transcript -> normalized -> parsed -> decision -> rows
-```
+5. **Decide: commit, ask, or reject.** If everything is unambiguous, book it. If something is missing or
+   ambiguous, send Telegram buttons (*Ramesh Kumar or Ramesh Verma? · ➕ Naya customer*). If the sentence is not a
+   transaction at all, say so politely.
 
-## What is where
+6. **Book it: one transaction, every table.** Stock movement, credit ledger and the transaction record are
+   written together or not at all. Balances are derived from the ledger, never stored and edited, so they cannot
+   drift.
 
-| Path | Role |
+The shopkeeper sees only a friendly reply with an Undo button. The whole trip typically takes a few seconds.
+
+---
+
+## The tools, and what each one is for
+
+### Telegram: the entire user interface
+No app to install, no login screen, no training. Shopkeepers already use Telegram or WhatsApp-style chat, and
+voice notes are one long-press away. Inline buttons give us a form UI without building one. Commands like
+`/add_product Maggi packet 14`, `/products`, `/customers` and `/dashboard` cover the rest.
+
+### Whisper (faster-whisper): ears
+OpenAI's Whisper model, run locally through the faster-whisper runtime. It is the reason the bot understands
+*"paanch kilo chawal"* spoken in a noisy shop. It loads once inside the worker and transcribes on CPU in a couple
+of seconds per clip. If the laptop is struggling, a single environment variable switches speech recognition to
+Groq's hosted Whisper instead.
+
+### Ollama + Qwen 2.5 (3B): the careful reader
+A small language model that runs on the laptop. It is used *only* for sentences the rules parser could not fully
+handle, and its answer is checked against the transcript before it is trusted. Because it is local, there is no
+per-call cost and no customer data leaves the machine. Groq and Gemini are wired in as optional fallbacks.
+
+### PostgreSQL: the source of truth
+One database holds shops, customers, products, aliases, stock movements, the credit ledger, every message and
+every AI call made. Row-level locking (`FOR UPDATE SKIP LOCKED`) is what lets the job queue live inside Postgres
+with no extra broker, and unique constraints are what make duplicate deliveries harmless.
+
+### n8n: the shop's night-shift assistant
+n8n is a visual automation tool. KiranaCrew ships four ready-made workflows:
+
+| Workflow | What it does |
 |---|---|
-| `backend/app/domain/` | pure functions, no DB/network: `normalize`, `rules_parser`, `llm_parser` (+ grounding), `resolve`, `decide`, `money` |
-| `backend/app/services/` | `pipeline` (three short transactions per message), `bookkeeping` (the only writer to ledgers), `confirmations`, `jobs`, `replies`, `queries` |
-| `backend/app/stt/`, `app/llm/` | provider interfaces: faster-whisper / Groq / fixture; Ollama / Groq / Gemini |
-| `backend/app/api/` | `telegram` webhook, `dev` simulator + trace, `internal` (n8n), `dashboard` (JWT, read-only) |
-| `backend/app/cli/` | `migrate seed_demo register_shop set_webhook poll worker replay eval forecast insights` |
-| `backend/migrations/` | SQL schema (001) and the read-only role for n8n (002) |
-| `eval/` | `dataset.jsonl` (130), `heldout.jsonl` (55, written without looking at the parser), `results/`, `make_report.py` |
-| `workflows/` | four n8n schedules, exported JSON |
-| `frontend/` | Flutter web dashboard (226 lines), served at `/dashboard` after `flutter build web` |
-| `docs/` | `eval_report.md`, `runbook.md`, `decisions/ADR-00x.md` |
-| `scripts/` | `start_demo.ps1 demo_check.ps1 stop_demo.ps1 backup_db.ps1 switch_to_local.ps1` |
+| Daily summary | 9 pm every day: today's sales, cash vs credit, and outstanding balances, sent to the owner on Telegram |
+| Low-stock watch | Every 2 hours: anything below its reorder level gets flagged |
+| Failed-message alert | Every 15 minutes: if a voice note could not be processed, the operator hears about it |
+| Nightly jobs | Enqueues the demand forecast and weekly insights run |
 
-## Tests and evaluation
+Crucially, n8n is **read-only by design**: it connects with a database role that can only `SELECT`, and the
+API endpoints it calls can only read stats or enqueue jobs. Automation can never touch the ledger.
+
+### CrewAI: the weekly advisor
+Once a week, KiranaCrew writes the shopkeeper a short advisory note in Hinglish. This is the one place where AI
+agents are genuinely useful, so it is the one place they are used. Three CrewAI agents collaborate:
+
+- a **Credit-risk analyst** looks at whose balance is climbing and who has stopped paying,
+- an **Inventory analyst** spots what is overstocked and what keeps running out,
+- a **Shop advisor** turns those findings into five plain, actionable lines.
+
+The agents never compute anything. Plain SQL gathers every fact first (weekly sales, top balances, slow stock),
+the agents only rank, explain and phrase, and the note is saved as *unapproved* until a human okays it. Every fact
+the agents were given is stored alongside the note, so any claim can be verified. If CrewAI is not installed, the
+same three prompts run one after another through the normal LLM chain.
+
+### StatsForecast: demand forecasting that has to earn its place
+A nightly job fits a statistical model (AutoETS) to each product's sales history and compares it against the
+simplest possible baseline ("next week looks like last week"). The forecast is shown on the dashboard **only if
+it beats the baseline** on a rolling test. No forecast is better than a misleading one.
+
+### Flutter web dashboard: a glance at the shop
+A read-only web dashboard for today's sales, outstanding credit per customer, stock levels and recent
+transactions. Type `/dashboard` in the bot and it replies with a link that is valid for 24 hours. No passwords
+to remember.
+
+### Docker: one command to run it all
+Postgres, the API, the worker and n8n are all described in one compose file. `.\scripts\start_demo.ps1` brings
+the whole stack up from cold, migrates the schema, seeds a demo shop with 12 weeks of history, and connects the
+Telegram bot.
+
+---
+
+## Numbers we are proud of
+
+| | |
+|---|---|
+| Evaluation sentences | 185 (130 development, 55 held out and written blind) |
+| Correct parses on the held-out set | 100 % (rules) · 100 % (hybrid) |
+| Wrong entries silently written to the books | **0** |
+| Rules-only parse latency | 0 ms (instant) |
+| Monthly running cost | ₹0 |
+| Cloud services required | Telegram only |
+
+Full methodology and per-category tables: [docs/eval_report.md](docs/eval_report.md).
+
+---
+
+## Try it in five minutes
 
 ```powershell
-cd backend
-python -m pytest -q                                              # unit + integration (needs the Docker Postgres; creates kirana_test)
-python -m app.cli.eval --dataset ..\eval\heldout.jsonl --catalog ..\eval\seed_catalog.json --parser rules --errors
-python -m app.cli.eval --dataset ..\eval\heldout.jsonl --catalog ..\eval\seed_catalog.json --parser hybrid --provider ollama
-python -m app.cli.replay --update ..\demo\updates\credit_sale.json --times 10 --concurrency 5 --fresh   # idempotency demo
+copy .env.example .env          # paste your BotFather token into TELEGRAM_BOT_TOKEN
+.\scripts\start_demo.ps1        # Docker stack + migrate + seed + tunnel + webhook
 ```
 
-Numbers, per parser mode and dataset, are in [`docs/eval_report.md`](docs/eval_report.md). The metric that matters
-is the **false-update rate** (committed when the gold says ask/reject, or committed different values): 0 on both sets.
+Then send `/start` to your bot, register yourself with `python -m app.cli.register_shop --telegram-user-id <id>`,
+and say *"Ramesh ne 2 kilo cheeni udhaar liya"*.
 
-## The catalog grows from the chat
+No Telegram handy? The built-in simulator runs the exact same pipeline from a curl command.
 
-- Say an unknown item → **➕ Naya item** → the bot asks only what it still needs (unit is skipped when you said
-  "packet"/"kilo"; rate can be skipped) → the entry is booked and the word you used becomes the alias.
-- Near-miss spellings get **"Refined Oil?"**-style buttons; picking one teaches that spelling.
-- Unknown customer → **➕ Naya customer**.
-- `/add_product` and `/add_customer` are wizards, not syntax: `/add_product Maggi packet 14`, `/add_product 14 rs maggi pkt`,
-  `/add_product Maggi` (asks unit, then rate), or bare `/add_product` (asks name). Pack sizes are understood
-  (`Bournvita 500 g packet 250` → item "Bournvita 500g").
-- `/alias Rice chaval` · `/price Rice 52` · `/remove_product Maggi` · `/products` · `/customers`. Owner only; all audited.
+Everything else, from the full setup guide to the folder map, tests, demo-day switches and the
+architecture decision records, lives in **[docs/REFERENCE.md](docs/REFERENCE.md)** and
+**[docs/architecture.md](docs/architecture.md)**.
 
-## Demo-day switches (env only, zero code changes)
+---
 
-| Problem | Switch |
-|---|---|
-| tunnel died | `.\scripts\start_demo.ps1 -TunnelOnly` or `python -m app.cli.poll` |
-| Whisper slow | `STT_PROVIDER=groq` (needs `GROQ_API_KEY`), or `STT_PROVIDER=fixture` with a pre-recorded clip |
-| Ollama slow / GPU cannot pin memory | `PARSER_MODE=rules`, or `LLM_PROVIDERS=groq`, or `OLLAMA_NUM_GPU=0` |
-| Telegram down | `/dev/simulate` + `/dev/trace` |
+## Design principles in one breath
 
-## Decisions
-
-Why Telegram, why rules first, why derived balances and five-layer idempotency, why n8n is read-only, why agents are
-kept out of bookkeeping: [`docs/decisions/`](docs/decisions/).
+Rules before AI. AI never near arithmetic. Ask, never guess. Undo, never delete. Derive balances, never store
+them. Automation reads, humans approve, code writes. Runs on a laptop, costs nothing, keeps the shop's data in the
+shop.
